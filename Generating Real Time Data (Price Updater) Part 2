@@ -1,0 +1,66 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Aug 12 22:02:56 2020
+
+@author: User
+"""
+import os
+import pandas as pd
+import requests
+import bs4
+from bs4 import BeautifulSoup
+import matplotlib.pyplot as plt
+import csv
+import time
+from datetime import datetime
+
+#Find the closing price of the stock using Webscraper
+def find_price(stock_name):
+    r=requests.get('https://finance.yahoo.com/quote/'+stock_name+'/')
+    soup=bs4.BeautifulSoup(r.text,'lxml')
+    price=soup.find_all('div', {'class':"My(6px) Pos(r) smartphone_Mt(6px)"} )[0].find('span').text
+    return price
+
+#check if dir exist if not create it
+def check_dir(file_name):
+    directory = os.path.dirname(file_name)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+
+def stock_price_update(stock):
+    
+    check_dir(r'C:\\Users\\User\\Desktop\\Price_csv_Updater\\'+str(stock)+'.csv')
+    
+    current_price = find_price(stock)
+    
+    return current_price
+
+stock= input("Stock: ")
+file_name=r'C:\\Users\\User\\Desktop\\Price_csv_Updater\\'+str(stock)+'.csv'
+print(file_name)
+check_dir(file_name)
+
+#Will open the newly created file and add in the column name
+with open(file_name, "w") as csv_file:
+    fieldnames = ['Time', 'Price']
+    writer=csv.DictWriter(csv_file, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerow({'Time': datetime.now() ,'Price':stock_price_update(stock) })
+    
+#Will update the price continuously every one second    
+while True:
+    
+    with open(file_name, "a") as csv_file:
+
+        csv_writer = csv.writer(csv_file)
+        csv_writer.writerow([datetime.now(),stock_price_update(stock)])
+        time.sleep(1)
+        
+    # with open(file_name, "a") as csv_file:
+    #     csv_writer = csv.writer(csv_file)
+    #     csv_writer.writerow([datetime.now(),stock_price_update(stock)]) 
+    #     time.sleep(1)
+    
+    # Writerow is expecting a list or tuple. A string can also be a sequence.
+    # In order not to have number seperated by , use []
